@@ -1,3 +1,7 @@
+# Sobre este fork
+
+Este fork tem o objetivo de realizar correções no código original do pixqrcode, aparentemente abandonado. Em particular, a validação e correção no uso de CNPJ e emails como chaves.
+
 # Pix QRCode - Python
 
 #### Versao: __1.1.0__
