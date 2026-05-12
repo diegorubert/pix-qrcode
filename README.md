@@ -4,6 +4,10 @@ Este fork tem o objetivo de realizar correções no código original do pixqrcod
 
 # Pix QRCode - Python
 
+#### Versao: __1.1.1__
+
+Correção para chaves do tipo CNPJ e email.
+
 #### Versao: __1.1.0__
 
 Biblioteca para a geração de codigos QR (BRCode como chamados na documentação do BACEN) a fins de facilitar a exibição para pagamentos ao consumidor.
