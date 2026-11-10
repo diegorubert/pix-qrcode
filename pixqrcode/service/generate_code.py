@@ -6,35 +6,42 @@ from pixqrcode.utils.crc16 import crc16
 class GenerateCode:
     def __init__(self):
         self.merchant = MerchantAccount()
-        # IMPORTANTE: Isso não funcionava, pois o comprimento do email não é fixo.
-        # Agora calculamos dinamicamente em generate.
-        self.map_guis = {
-            "mobile": "36",
-            "cpf": "33",
-            "cnpj": "36",
-            "uuid": "58",
-            "email": "45"  # <----- Não funciona
-        }
 
     @classmethod
     def left_zero(cls, text: str):
         return str(len(text)).zfill(2)
 
+    @classmethod
+    def tlv(cls, tag: str, value: str) -> str:
+        """
+    Monta um campo EMV: ID (2 dígitos) + tamanho (sempre 2 dígitos) + valor
+        """
+        value = str(value)
+        if len(value) > 99:
+            raise ValueError("Campo {0} excede 99 caracteres: {1}".format(tag, value))
+        return f"{tag}{cls.left_zero(value)}{value}"
+
     def generate(self, pix: Pix):
-        if pix.method == "email":
-            pass
-        len_pix_key = len(pix.key)
-        len_marchant = len('0014BR.GOV.BCB.PIX') + 2 + len(str(len_pix_key)) + len_pix_key
-        return f"00020126{len_marchant}0014{self.merchant.globally_unique_identifier}01{len(pix.key)}{pix.key}520400005303986540" \
-               f"{len(pix.amount.__str__())}{pix.amount.__str__()}5802{pix.country_code}59{self.left_zero(pix.name)}" \
-               f"{pix.name}60{self.left_zero(pix.city)}{pix.city}" \
-               f"62{str(len(pix.reference_label) + 4).zfill(2)}05{self.left_zero(pix.reference_label)}" \
-               f"{pix.reference_label}6304"
+        merchant_account = self.tlv("00", self.merchant.globally_unique_identifier) + self.tlv("01", pix.key)
+        additional_data = self.tlv("05", pix.reference_label)
+        return (
+            self.tlv("00", "01")
+            + self.tlv(self.merchant.merchant_account_information, merchant_account)
+            + self.tlv("52", pix.merchant_category_code)
+            + self.tlv("53", pix.transaction_currency)
+            + self.tlv("54", pix.amount)
+            + self.tlv("58", pix.country_code)
+            + self.tlv("59", pix.name)
+            + self.tlv("60", pix.city)
+            + self.tlv("62", additional_data)
+            + "6304"
+        )
 
     @classmethod
     def crc16code(cls, query: str) -> str:
-        return hex(crc16(query.encode())).__str__()
+        # O CRC tem tamanho fixo: sempre 4 dígitos hexadecimais, com zeros à esquerda
+        return f"{crc16(query.encode()):04X}"
 
     def format_code(self, pix: Pix):
         hash_payment = self.generate(pix)
-        return f"{hash_payment}{self.crc16code(hash_payment).upper()[2:]}".strip()
+        return f"{hash_payment}{self.crc16code(hash_payment)}".strip()

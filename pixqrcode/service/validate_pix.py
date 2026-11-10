@@ -7,6 +7,12 @@ from pixqrcode.utils.format_values import FormatValues
 class ValidatePix:
     is_valid = False
 
+    # Tamanhos máximos definidos no Manual do BR Code (BACEN) / EMV QRCPS.
+    # Alguns apps (ex.: Santander) rejeitam QR codes que excedem esses limites.
+    MAX_NAME = 25             # ID 59 - Merchant Name
+    MAX_CITY = 15             # ID 60 - Merchant City
+    MAX_REFERENCE_LABEL = 25  # ID 62.05 - Reference Label (txid)
+
     def __init__(self, pix: Pix):
         self.pix = pix
 
@@ -22,14 +28,18 @@ class ValidatePix:
         if not self.pix.name:
             raise PixError("nome não informado")
 
-        self.pix.name = FormatValues.texts(self.pix.name)
+        self.pix.name = FormatValues.truncate(FormatValues.texts(self.pix.name), self.MAX_NAME)
+        if not self.pix.name:
+            raise PixError("nome inválido")
         return True
 
     def city(self):
         if not self.pix.city:
             raise PixError("cidade não informada")
 
-        self.pix.city = FormatValues.texts(self.pix.city)
+        self.pix.city = FormatValues.truncate(FormatValues.texts(self.pix.city), self.MAX_CITY)
+        if not self.pix.city:
+            raise PixError("cidade inválida")
         return True
 
     def amount(self):
@@ -43,7 +53,9 @@ class ValidatePix:
         if not self.pix.reference_label:
             self.pix.reference_label = "***"
         else:
-            self.pix.reference_label = FormatValues.texts_no_space(self.pix.reference_label)
+            self.pix.reference_label = FormatValues.truncate(
+                FormatValues.texts_no_space(self.pix.reference_label), self.MAX_REFERENCE_LABEL
+            ) or "***"
 
     def key(self):
         if not self.pix.key:

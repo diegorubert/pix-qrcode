@@ -4,6 +4,15 @@ Este fork tem o objetivo de realizar correções no código original do pixqrcod
 
 # Pix QRCode - Python
 
+#### Versao: __1.1.2__
+
+Correções de conformidade com o Manual do BR Code (QR codes rejeitados por alguns bancos, ex.: Santander):
+
+* CRC16 sempre com 4 dígitos hexadecimais (antes os zeros à esquerda eram perdidos, ex.: `0248` virava `248`).
+* Nome limitado a 25 caracteres, cidade a 15 e identificador (txid) a 25.
+* Acentos convertidos em vez de removidos (`MUNHÕES` → `MUNHOES`, antes `MUNHES`).
+* Tamanhos dos campos sempre com 2 dígitos (chaves curtas e valores a partir de R$ 1.000.000,00).
+
 #### Versao: __1.1.1__
 
 Correção para chaves do tipo CNPJ e email.
